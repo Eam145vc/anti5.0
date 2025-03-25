@@ -1,0 +1,279 @@
+// server/api/index.js
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
+const http = require('http');
+const socketIo = require('socket.io');
+const fs = require('fs');
+const path = require('path');
+
+// Cargar variables de entorno
+dotenv.config();
+
+// Crear la aplicación Express
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+// Conexión a MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/anticheat', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('Conectado a MongoDB'))
+.catch(err => console.error('Error conectando a MongoDB:', err));
+
+// Definir esquemas y modelos
+const PlayerSchema = new mongoose.Schema({
+  activisionId: { type: String, required: true, unique: true },
+  channelId: { type: Number, required: true },
+  lastSeen: { type: Date, default: Date.now },
+  isOnline: { type: Boolean, default: false },
+  isGameRunning: { type: Boolean, default: false },
+  clientStartTime: Date,
+  pcStartTime: String
+});
+
+const MonitorDataSchema = new mongoose.Schema({
+  activisionId: { type: String, required: true },
+  channelId: { type: Number, required: true },
+  timestamp: { type: Date, default: Date.now },
+  clientStartTime: Date,
+  pcStartTime: String,
+  isGameRunning: Boolean,
+  processes: Array,
+  usbDevices: Array,
+  hardwareInfo: Object,
+  systemInfo: Object,
+  gameConfigHashes: Array,
+  networkConnections: Array,
+  loadedDrivers: Array,
+  backgroundServices: Array,
+  memoryInjections: Object
+});
+
+const ScreenshotSchema = new mongoose.Schema({
+  activisionId: { type: String, required: true },
+  channelId: { type: Number, required: true },
+  timestamp: { type: Date, default: Date.now },
+  screenshot: { type: String, required: true } // Base64
+});
+
+const Player = mongoose.model('Player', PlayerSchema);
+const MonitorData = mongoose.model('MonitorData', MonitorDataSchema);
+const Screenshot = mongoose.model('Screenshot', ScreenshotSchema);
+
+// Rutas API
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date() });
+});
+
+// Obtener todos los jugadores
+app.get('/api/players', async (req, res) => {
+  try {
+    const players = await Player.find({});
+    res.json(players);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener jugadores por canal
+app.get('/api/players/channel/:channelId', async (req, res) => {
+  try {
+    const players = await Player.find({ channelId: req.params.channelId });
+    res.json(players);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener datos de monitoreo por jugador
+app.get('/api/monitor/:activisionId', async (req, res) => {
+  try {
+    const data = await MonitorData.find({ activisionId: req.params.activisionId })
+      .sort({ timestamp: -1 })
+      .limit(1);
+    res.json(data[0] || {});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener historial de monitoreo por jugador
+app.get('/api/monitor/:activisionId/history', async (req, res) => {
+  try {
+    const data = await MonitorData.find({ activisionId: req.params.activisionId })
+      .sort({ timestamp: -1 })
+      .limit(10);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener screenshots por jugador
+app.get('/api/screenshots/:activisionId', async (req, res) => {
+  try {
+    const screenshots = await Screenshot.find({ activisionId: req.params.activisionId })
+      .sort({ timestamp: -1 });
+    res.json(screenshots);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Recibir datos de monitoreo
+app.post('/api/monitor', async (req, res) => {
+  try {
+    const data = req.body;
+    
+    // Guardar datos de monitoreo
+    const monitorData = new MonitorData(data);
+    await monitorData.save();
+    
+    // Actualizar o crear jugador
+    await Player.findOneAndUpdate(
+      { activisionId: data.activisionId },
+      {
+        channelId: data.channelId,
+        lastSeen: new Date(),
+        isOnline: true,
+        isGameRunning: data.isGameRunning,
+        clientStartTime: data.clientStartTime,
+        pcStartTime: data.pcStartTime
+      },
+      { upsert: true, new: true }
+    );
+    
+    // Emitir evento a clientes web conectados
+    io.to(`channel-${data.channelId}`).emit('monitor-update', {
+      activisionId: data.activisionId,
+      channelId: data.channelId,
+      timestamp: data.timestamp,
+      isGameRunning: data.isGameRunning
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error procesando datos de monitoreo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Recibir actualización de estado del juego
+app.post('/api/game-status', async (req, res) => {
+  try {
+    const { activisionId, channelId, isGameRunning } = req.body;
+    
+    // Actualizar jugador
+    await Player.findOneAndUpdate(
+      { activisionId },
+      {
+        lastSeen: new Date(),
+        isGameRunning
+      }
+    );
+    
+    // Emitir evento a clientes web
+    io.to(`channel-${channelId}`).emit('game-status-update', {
+      activisionId,
+      isGameRunning,
+      timestamp: new Date()
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Recibir screenshot
+app.post('/api/screenshot', async (req, res) => {
+  try {
+    const { activisionId, channelId, timestamp, screenshot } = req.body;
+    
+    // Guardar screenshot
+    const screenshotDoc = new Screenshot({
+      activisionId,
+      channelId,
+      timestamp,
+      screenshot
+    });
+    await screenshotDoc.save();
+    
+    // Notificar a clientes web
+    io.to(`channel-${channelId}`).emit('new-screenshot', {
+      activisionId,
+      timestamp,
+      id: screenshotDoc._id
+    });
+    
+    res.json({ success: true, id: screenshotDoc._id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verificar si un jugador sigue activo
+const checkPlayerActivity = async () => {
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  
+  try {
+    // Encontrar jugadores que no han enviado datos en 5 minutos
+    const inactivePlayers = await Player.find({
+      isOnline: true,
+      lastSeen: { $lt: fiveMinutesAgo }
+    });
+    
+    // Marcar como desconectados
+    for (const player of inactivePlayers) {
+      player.isOnline = false;
+      await player.save();
+      
+      // Notificar a los clientes web
+      io.to(`channel-${player.channelId}`).emit('player-offline', {
+        activisionId: player.activisionId,
+        timestamp: new Date()
+      });
+    }
+  } catch (error) {
+    console.error('Error verificando actividad de jugadores:', error);
+  }
+};
+
+// Verificar cada minuto
+setInterval(checkPlayerActivity, 60 * 1000);
+
+// Configurar Socket.IO para comunicación en tiempo real
+io.on('connection', (socket) => {
+  console.log('Cliente web conectado:', socket.id);
+  
+  // Suscribirse a un canal específico
+  socket.on('join-channel', (channelId) => {
+    socket.join(`channel-${channelId}`);
+    console.log(`Cliente ${socket.id} suscrito al canal ${channelId}`);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('Cliente web desconectado:', socket.id);
+  });
+});
+
+// Iniciar servidor
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Servidor API corriendo en puerto ${PORT}`);
+});
