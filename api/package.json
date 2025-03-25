@@ -1,8 +1,4 @@
-# Asegúrate de estar en la carpeta api
-cd C:\anti5\server\api
-
-# Crea el package.json básico
-echo {
+{
   "name": "anticheat-api",
   "version": "1.0.0",
   "main": "index.js",
@@ -17,4 +13,4 @@ echo {
     "dotenv": "^16.0.3",
     "socket.io": "^4.6.1"
   }
-} > package.json
+}
