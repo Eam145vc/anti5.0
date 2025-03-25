@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import './PlayerDetail.css';
@@ -7,52 +7,48 @@ function PlayerDetail({ apiUrl }) {
   const { activisionId } = useParams();
   const [player, setPlayer] = useState(null);
   const [monitorData, setMonitorData] = useState(null);
-  const [screenshots, setScreenshots] = useState([]);
-  const [history, setHistory] = useState([]);
+  const [monitorHistory, setMonitorHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Cargar datos del jugador
-  useEffect(() => {
-    const loadPlayerData = async () => {
-      try {
-        setLoading(true);
-        
-        // Cargar información básica del jugador
-        const playerResponse = await axios.get(`${apiUrl}/players`);
-        const playerData = playerResponse.data.find(p => p.activisionId === activisionId);
-        
-        if (!playerData) {
-          setError('Jugador no encontrado');
-          return;
-        }
-        
-        setPlayer(playerData);
-        
-        // Cargar datos de monitoreo más recientes
-        const monitorResponse = await axios.get(`${apiUrl}/monitor/${activisionId}`);
-        setMonitorData(monitorResponse.data);
-        
-        // Cargar historial de monitoreo
-        const historyResponse = await axios.get(`${apiUrl}/monitor/${activisionId}/history`);
-        setHistory(historyResponse.data);
-        
-        // Cargar screenshots
-        const screenshotsResponse = await axios.get(`${apiUrl}/screenshots/${activisionId}`);
-        setScreenshots(screenshotsResponse.data);
-        
-        setError(null);
-      } catch (err) {
-        setError('Error cargando datos del jugador');
-        console.error(err);
-      } finally {
-        setLoading(false);
+  // Cargar datos del jugador usando useCallback
+  const loadPlayerData = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Cargar información básica del jugador
+      const playerResponse = await axios.get(`${apiUrl}/players`);
+      const playerData = playerResponse.data.find(p => p.activisionId === activisionId);
+      
+      if (!playerData) {
+        setError('Jugador no encontrado');
+        return;
       }
-    };
-
-    loadPlayerData();
+      
+      setPlayer(playerData);
+      
+      // Cargar datos de monitoreo más recientes
+      const monitorResponse = await axios.get(`${apiUrl}/monitor/${activisionId}`);
+      setMonitorData(monitorResponse.data);
+      
+      // Cargar historial de monitoreo
+      const historyResponse = await axios.get(`${apiUrl}/monitor/${activisionId}/history`);
+      setMonitorHistory(historyResponse.data);
+      
+      setError(null);
+    } catch (err) {
+      setError('Error cargando datos del jugador');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, [apiUrl, activisionId]);
+
+  // Cargar datos al montar o cambiar el ID
+  useEffect(() => {
+    loadPlayerData();
+  }, [loadPlayerData]);
 
   if (loading) {
     return <div className="loading">Cargando datos del jugador...</div>;
@@ -204,8 +200,36 @@ function PlayerDetail({ apiUrl }) {
           </div>
         )}
         
-        {/* El resto de las secciones de pestañas aquí */}
-        {/* ... (system, processes, network, drivers, screenshots, history) */}
+        {/* Placeholder para futuras pestañas */}
+        {activeTab === 'system' && (
+          <div className="system-tab">
+            <h3>Información del Sistema</h3>
+            {/* Contenido de la pestaña de sistema */}
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="history-tab">
+            <h3>Historial de Monitoreo</h3>
+            {monitorHistory.length > 0 ? (
+              <div className="monitor-history-list">
+                {monitorHistory.map((entry, index) => (
+                  <div key={index} className="history-entry">
+                    <div className="history-date">
+                      {new Date(entry.timestamp).toLocaleString()}
+                    </div>
+                    <div className="history-details">
+                      <span>Estado: {entry.isGameRunning ? 'Jugando' : 'Inactivo'}</span>
+                      <span>Duración: {entry.sessionDuration} minutos</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No hay historial de monitoreo disponible</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
