@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './LiveMonitoring.css';
@@ -9,7 +9,7 @@ function LiveMonitoring({ selectedChannel, apiUrl, socket }) {
   const [error, setError] = useState(null);
 
   // Función para cargar jugadores del canal seleccionado
-  const loadPlayers = async () => {
+  const loadPlayers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${apiUrl}/players/channel/${selectedChannel}`);
@@ -21,7 +21,7 @@ function LiveMonitoring({ selectedChannel, apiUrl, socket }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedChannel, apiUrl]);
 
   // Cargar jugadores al iniciar o cambiar de canal
   useEffect(() => {
@@ -31,7 +31,7 @@ function LiveMonitoring({ selectedChannel, apiUrl, socket }) {
     const interval = setInterval(loadPlayers, 30000); // cada 30 segundos
     
     return () => clearInterval(interval);
-  }, [selectedChannel, apiUrl]);
+  }, [loadPlayers]);
 
   // Escuchar eventos del socket para actualizar en tiempo real
   useEffect(() => {
