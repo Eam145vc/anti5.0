@@ -1,0 +1,143 @@
+.player-detail {
+    padding: 1rem;
+  }
+  
+  .back-link {
+    margin-bottom: 1rem;
+  }
+  
+  .back-link a {
+    color: #3f51b5;
+    text-decoration: none;
+  }
+  
+  .player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .player-header h2 {
+    margin: 0;
+  }
+  
+  .player-info {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .channel-badge, .status-badge, .game-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+  
+  .channel-badge {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+  
+  .status-badge.online {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+  
+  .status-badge.offline {
+    background-color: #f5f5f5;
+    color: #757575;
+  }
+  
+  .game-badge {
+    background-color: #fff8e1;
+    color: #f57f17;
+  }
+  
+  .player-tabs {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+  }
+  
+  .tab {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  
+  .tab:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .tab.active {
+    border-bottom: 2px solid #3f51b5;
+    color: #3f51b5;
+    font-weight: 500;
+  }
+  
+  .tab-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-height: 400px;
+  }
+  
+  /* Overview Tab */
+  .info-card {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .info-card h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 1.1rem;
+  }
+  
+  .info-row {
+    display: flex;
+    margin-bottom: 0.5rem;
+  }
+  
+  .info-label {
+    width: 150px;
+    font-weight: 500;
+  }
+  
+  .usb-devices {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+  }
+  
+  .device-item {
+    background-color: #f5f5f5;
+    padding: 0.5rem;
+    border-radius: 4px;
+  }
+  
+  .device-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  
+  .device-id {
+    font-size: 0.8rem;
+    color: #757575;
+    margin-top: 0.25rem;
+    word-break: break-all;
+  }
+  
+  .more-devices {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-style: italic;
+    color: #757575;
+    padding: 0.5rem;
+  }
