@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import axios from 'axios';
 import './App.css';
 
 // Componentes
@@ -38,6 +37,19 @@ function App() {
   }, [socket, selectedChannel]);
 
   // Manejar notificaciones
+  const addNotification = useCallback((message, type = 'info') => {
+    const newNotification = {
+      id: Date.now(),
+      message,
+      type,
+      time: new Date().toLocaleTimeString()
+    };
+    
+    setNotifications(prev => [newNotification, ...prev].slice(0, 50));
+    setNotificationCount(prev => prev + 1);
+  }, []);
+
+  // Listener de socket para notificaciones
   useEffect(() => {
     if (socket) {
       // Actualización de estado de monitor
@@ -60,20 +72,15 @@ function App() {
       socket.on('player-offline', (data) => {
         addNotification(`El jugador ${data.activisionId} se ha desconectado`, 'warning');
       });
-    }
-  }, [socket]);
 
-  const addNotification = useCallback((message, type = 'info') => {
-    const newNotification = {
-      id: Date.now(),
-      message,
-      type,
-      time: new Date().toLocaleTimeString()
-    };
-    
-    setNotifications(prev => [newNotification, ...prev].slice(0, 50));
-    setNotificationCount(prev => prev + 1);
-  }, []);
+      return () => {
+        socket.off('monitor-update');
+        socket.off('game-status-update');
+        socket.off('new-screenshot');
+        socket.off('player-offline');
+      };
+    }
+  }, [socket, addNotification]);
 
   const clearNotifications = () => {
     setNotificationCount(0);
