@@ -1,38 +1,167 @@
-.App {
-  text-align: center;
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #f4f6f8;
+  color: #333;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.app-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  min-height: 100vh;
+}
+
+.app-header {
+  background-color: #1a237e;
   color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.App-link {
-  color: #61dafb;
+.logo h1 {
+  margin: 0;
+  font-size: 1.5rem;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.channel-selector {
+  display: flex;
+  align-items: center;
+}
+
+.channel-selector label {
+  margin-right: 0.5rem;
+}
+
+.channel-selector select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: none;
+}
+
+.notification-icon {
+  position: relative;
+  cursor: pointer;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #f44336;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.app-content {
+  display: flex;
+  flex: 1;
+}
+
+.app-nav {
+  width: 200px;
+  background-color: #303f9f;
+  color: white;
+  padding: 1rem 0;
+}
+
+.app-nav ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.app-nav li {
+  padding: 0;
+}
+
+.app-nav a {
+  display: block;
+  padding: 0.75rem 2rem;
+  color: white;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.app-nav a:hover {
+  background-color: #3949ab;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.notification-panel {
+  width: 300px;
+  background-color: white;
+  border-left: 1px solid #e0e0e0;
+  padding: 1rem;
+}
+
+.notification-panel h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.notification-panel ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 100px);
+}
+
+.notification-panel li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.9rem;
+}
+
+.notification-time {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.notification-message {
+  display: block;
+}
+
+.notification-info {
+  background-color: #e3f2fd;
+}
+
+.notification-warning {
+  background-color: #fff8e1;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
 }
