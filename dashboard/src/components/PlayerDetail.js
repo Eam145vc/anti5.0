@@ -8,6 +8,7 @@ function PlayerDetail({ apiUrl }) {
   const [player, setPlayer] = useState(null);
   const [monitorData, setMonitorData] = useState(null);
   const [monitorHistory, setMonitorHistory] = useState([]);
+  const [screenshots, setScreenshots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -35,6 +36,10 @@ function PlayerDetail({ apiUrl }) {
       // Cargar historial de monitoreo
       const historyResponse = await axios.get(`${apiUrl}/monitor/${activisionId}/history`);
       setMonitorHistory(historyResponse.data);
+      
+      // Cargar screenshots
+      const screenshotsResponse = await axios.get(`${apiUrl}/screenshots/${activisionId}`);
+      setScreenshots(screenshotsResponse.data);
       
       setError(null);
     } catch (err) {
@@ -200,11 +205,28 @@ function PlayerDetail({ apiUrl }) {
           </div>
         )}
         
-        {/* Placeholder para futuras pestañas */}
-        {activeTab === 'system' && (
-          <div className="system-tab">
-            <h3>Información del Sistema</h3>
-            {/* Contenido de la pestaña de sistema */}
+        {activeTab === 'screenshots' && (
+          <div className="screenshots-tab">
+            <h3>Screenshots</h3>
+            {screenshots.length === 0 ? (
+              <p>No hay screenshots disponibles</p>
+            ) : (
+              <div className="screenshots-grid">
+                {screenshots.map((screenshot) => (
+                  <div key={screenshot._id} className="screenshot-thumbnail">
+                    <Link to={`/screenshot/${screenshot._id}`}>
+                      <img 
+                        src={`data:image/jpeg;base64,${screenshot.screenshot}`} 
+                        alt={`Screenshot de ${activisionId}`}
+                      />
+                      <div className="screenshot-info">
+                        {new Date(screenshot.timestamp).toLocaleString()}
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -220,13 +242,75 @@ function PlayerDetail({ apiUrl }) {
                     </div>
                     <div className="history-details">
                       <span>Estado: {entry.isGameRunning ? 'Jugando' : 'Inactivo'}</span>
-                      <span>Duración: {entry.sessionDuration} minutos</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <p>No hay historial de monitoreo disponible</p>
+            )}
+          </div>
+        )}
+
+        {/* Placeholder para futuras pestañas */}
+        {activeTab === 'system' && (
+          <div className="system-tab">
+            <h3>Información del Sistema</h3>
+            {/* Contenido de la pestaña de sistema */}
+          </div>
+        )}
+
+        {activeTab === 'processes' && (
+          <div className="processes-tab">
+            <h3>Procesos</h3>
+            {monitorData && monitorData.processes ? (
+              <div className="processes-list">
+                {monitorData.processes.map((process, index) => (
+                  <div key={index} className="process-item">
+                    <span>{process.name}</span>
+                    <span>{process.pid}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No hay información de procesos disponible</p>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'network' && (
+          <div className="network-tab">
+            <h3>Conexiones de Red</h3>
+            {monitorData && monitorData.networkConnections ? (
+              <div className="network-connections">
+                {monitorData.networkConnections.map((connection, index) => (
+                  <div key={index} className="connection-item">
+                    <span>{connection.localAddress}:{connection.localPort}</span>
+                    <span>{connection.remoteAddress}:{connection.remotePort}</span>
+                    <span>{connection.state}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No hay información de conexiones de red disponible</p>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'drivers' && (
+          <div className="drivers-tab">
+            <h3>Drivers Cargados</h3>
+            {monitorData && monitorData.loadedDrivers ? (
+              <div className="drivers-list">
+                {monitorData.loadedDrivers.map((driver, index) => (
+                  <div key={index} className="driver-item">
+                    <span>{driver.name}</span>
+                    <span>{driver.version}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No hay información de drivers disponible</p>
             )}
           </div>
         )}
