@@ -13,10 +13,7 @@ function ScreenshotViewer({ apiUrl }) {
     const loadScreenshot = async () => {
       try {
         setLoading(true);
-        // Normalmente se haría una petición específica para un screenshot por ID
-        // Pero como no tenemos esa ruta en la API, simularemos obtenerlo
-        // Esto debe adaptarse a tu API real
-        const response = await axios.get(`${apiUrl}/screenshots/${id}`);
+        const response = await axios.get(`${apiUrl}/screenshot/${id}`);
         setScreenshot(response.data);
         setError(null);
       } catch (err) {
