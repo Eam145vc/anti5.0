@@ -135,6 +135,19 @@ app.get('/api/screenshots/:activisionId', async (req, res) => {
   }
 });
 
+// Obtener un screenshot específico por ID
+app.get('/api/screenshot/:id', async (req, res) => {
+  try {
+    const screenshot = await Screenshot.findById(req.params.id);
+    if (!screenshot) {
+      return res.status(404).json({ error: 'Screenshot no encontrado' });
+    }
+    res.json(screenshot);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Recibir datos de monitoreo
 app.post('/api/monitor', async (req, res) => {
   try {
