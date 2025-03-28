@@ -12,8 +12,10 @@ function PlayerDetail({ apiUrl }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [deviceFilter, setDeviceFilter] = useState('');
+  const [selectedDeviceDetails, setSelectedDeviceDetails] = useState(null);
 
-  // Función para clasificar y agrupar dispositivos
+  // Función mejorada para clasificar y agrupar dispositivos
   const classifyDevices = (devices) => {
     const deviceCategories = {
       USB: [],
@@ -21,156 +23,283 @@ function PlayerDetail({ apiUrl }) {
       PCI: [],
       Audio: [],
       Red: [],
+      GPU: [],
+      Periféricos: [],
+      Almacenamiento: [],
       Otros: []
     };
 
-    // Patrones para identificación de dispositivos
+    // Patrones ampliados para identificación de dispositivos
     const patterns = {
       monitor: [
-        /monitor/i, 
-        /display/i, 
-        /screen/i, 
-        /lcd/i, 
-        /led/i,
-        /viewsonic/i,
-        /samsung/i,
-        /lg/i,
-        /dell/i,
-        /hp/i
+        /monitor/i, /display/i, /screen/i, /lcd/i, /led/i, /hdmi/i, /vga/i, /dvi/i,
+        /viewsonic/i, /samsung/i, /lg/i, /dell/i, /hp/i, /acer/i, /asus/i, /aoc/i, 
+        /benq/i, /nec/i, /philips/i, /msi/i, /lenovo/i, /displayport/i, /edid/i,
+        /monitor class/i, /generic pnp/i
       ],
       audio: [
-        /audio/i, 
-        /sound/i, 
-        /speaker/i, 
-        /microphone/i, 
-        /headphone/i,
-        /realtek/i,
-        /creative/i
+        /audio/i, /sound/i, /speaker/i, /microphone/i, /headphone/i, /headset/i,
+        /realtek/i, /creative/i, /logitech/i, /razer/i, /corsair/i, /steelseries/i,
+        /hyperx/i, /sennheiser/i, /bose/i, /jabra/i, /plantronics/i, /audio codec/i,
+        /alc\d+/i, /high definition audio/i, /sound blaster/i, /audio device/i,
+        /mixer/i, /midi/i, /wave/i, /ac97/i
       ],
       network: [
-        /network/i, 
-        /ethernet/i, 
-        /wifi/i, 
-        /wireless/i,
-        /broadcom/i,
-        /intel/i,
-        /realtek/i
+        /network/i, /ethernet/i, /wifi/i, /wireless/i, /lan/i, /wlan/i, /802\.11/i,
+        /broadcom/i, /intel/i, /realtek/i, /qualcomm/i, /atheros/i, /killer/i,
+        /netgear/i, /tp-link/i, /d-link/i, /asus/i, /cisco/i, /bluetooth/i,
+        /network adapter/i, /gigabit/i, /nic/i, /rtl8/i, /\bnic\b/i, /\bwifi\b/i
+      ],
+      gpu: [
+        /nvidia/i, /geforce/i, /gtx/i, /rtx/i, /quadro/i, /amd/i, /radeon/i, /rx/i,
+        /vega/i, /graphics/i, /gpu/i, /video/i, /display adapter/i, /3d controller/i,
+        /intel hd/i, /intel uhd/i, /intel iris/i, /directx/i, /opengl/i, /vulkan/i
       ],
       usb: [
-        /usb/i,
-        /hub/i,
-        /storage/i,
-        /pendrive/i,
-        /flash drive/i
+        /usb/i, /hub/i, /storage/i, /pendrive/i, /flash drive/i, /mass storage/i,
+        /composite device/i, /generic/i, /root hub/i, /port/i, /controller/i,
+        /xhci/i, /ehci/i, /uhci/i, /usb\d+/i, /universal serial bus/i
+      ],
+      pci: [
+        /pci/i, /pcie/i, /express/i, /bridge/i, /host bridge/i, /controller/i, 
+        /chipset/i, /intel/i, /amd/i, /nvidia/i, /bus/i, /pch/i, /northbridge/i, 
+        /southbridge/i, /root complex/i, /pci-to-pci/i
+      ],
+      storage: [
+        /disk/i, /drive/i, /hdd/i, /ssd/i, /nvme/i, /storage/i, /raid/i, /ahci/i,
+        /sata/i, /ide/i, /scsi/i, /samsung/i, /kingston/i, /western digital/i, /wd/i,
+        /seagate/i, /toshiba/i, /crucial/i, /sandisk/i, /intel/i, /m\.2/i,
+        /controller/i, /usb storage/i, /flash/i, /memory card/i, /sd card/i
+      ],
+      peripheral: [
+        /keyboard/i, /mouse/i, /trackpad/i, /touchpad/i, /pointing/i, /game/i,
+        /controller/i, /joystick/i, /gamepad/i, /webcam/i, /camera/i, /logitech/i, 
+        /razer/i, /corsair/i, /steelseries/i, /microsoft/i, /hp/i, /input device/i,
+        /hid/i, /human interface/i, /xinput/i, /xbox/i, /playstation/i, /ps4/i,
+        /ps5/i, /switch/i, /scanner/i, /printer/i
       ]
     };
 
+    // Marcas comunes de hardware
+    const knownBrands = [
+      'intel', 'amd', 'nvidia', 'realtek', 'qualcomm', 'broadcom', 'asus', 'dell',
+      'hp', 'lenovo', 'acer', 'samsung', 'lg', 'microsoft', 'toshiba', 'kingston',
+      'corsair', 'logitech', 'razer', 'gigabyte', 'msi', 'asrock', 'steelseries',
+      'creative', 'western digital', 'seagate', 'hyperx', 'crucial', 'sandisk',
+      'viewsonic', 'aoc', 'benq', 'nec', 'philips', 'd-link', 'tp-link', 'netgear'
+    ];
+
     devices.forEach(device => {
+      // Obtener todos los textos relevantes para clasificación
       const deviceName = (device.name || '').toLowerCase();
       const deviceId = (device.deviceId || '').toLowerCase();
       const description = (device.description || '').toLowerCase();
+      const vendor = (device.vendor || device.manufacturer || '').toLowerCase();
+      const allText = `${deviceName} ${deviceId} ${description} ${vendor}`;
 
       let classified = false;
-
-      // Función para verificar si algún patrón coincide
+      
+      // Función para verificar si algún patrón coincide con el texto
       const matchesPattern = (patterns, text) => {
         return patterns.some(pattern => pattern.test(text));
       };
+      
+      // Identificar marca para mejorar el nombre del dispositivo
+      const detectBrand = (text) => {
+        for (const brand of knownBrands) {
+          if (text.includes(brand)) {
+            return brand.charAt(0).toUpperCase() + brand.slice(1);
+          }
+        }
+        return null;
+      };
+      
+      // Función para generar un nombre más descriptivo
+      const getImprovedName = (device, deviceType) => {
+        const brand = detectBrand(allText);
+        const baseName = device.name || device.description || '';
+        
+        if (brand && !baseName.toLowerCase().includes(brand.toLowerCase())) {
+          return `${brand} ${deviceType}${baseName ? ': ' + baseName : ''}`;
+        } else if (baseName) {
+          return baseName;
+        } else {
+          return `${deviceType}${brand ? ' ' + brand : ''}`;
+        }
+      };
 
-      // Verificar monitores
-      if (matchesPattern(patterns.monitor, deviceName) || 
-          matchesPattern(patterns.monitor, deviceId) || 
-          matchesPattern(patterns.monitor, description)) {
+      // 1. Verificar GPU primero (alta prioridad para evitar confusión con otros PCI)
+      if (matchesPattern(patterns.gpu, allText)) {
+        deviceCategories.GPU.push({
+          ...device,
+          type: 'Tarjeta Gráfica',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
+          details: {
+            nombre: getImprovedName(device, 'GPU'),
+            descripcion: device.description || 'N/A',
+            identificador: device.deviceId || 'N/A',
+            fabricante: device.manufacturer || detectBrand(allText) || 'Desconocido',
+            memoria: device.memory || 'N/A',
+            driver: device.driver || 'N/A'
+          }
+        });
+        classified = true;
+      }
+      
+      // 2. Verificar monitores
+      else if (matchesPattern(patterns.monitor, allText)) {
         deviceCategories.Monitores.push({
           ...device,
           type: 'Monitor',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
           details: {
-            nombre: device.name || 'Monitor desconocido',
+            nombre: getImprovedName(device, 'Monitor'),
             descripcion: device.description || 'N/A',
             identificador: device.deviceId || 'N/A',
             resolucion: device.resolution || 'N/A',
-            fabricante: device.manufacturer || 'Desconocido'
+            fabricante: device.manufacturer || detectBrand(allText) || 'Desconocido',
+            interfaz: device.interface || (allText.includes('hdmi') ? 'HDMI' : 
+                     allText.includes('displayport') ? 'DisplayPort' : 
+                     allText.includes('dvi') ? 'DVI' : 
+                     allText.includes('vga') ? 'VGA' : 'N/A')
           }
         });
         classified = true;
       }
 
-      // Verificar dispositivos de audio
-      if (!classified && (matchesPattern(patterns.audio, deviceName) || 
-                          matchesPattern(patterns.audio, deviceId) || 
-                          matchesPattern(patterns.audio, description))) {
+      // 3. Verificar dispositivos de audio
+      else if (matchesPattern(patterns.audio, allText)) {
         deviceCategories.Audio.push({
           ...device,
           type: 'Dispositivo de Audio',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
           details: {
-            nombre: device.name || 'Dispositivo de audio desconocido',
+            nombre: getImprovedName(device, 'Audio'),
             descripcion: device.description || 'N/A',
-            fabricante: device.manufacturer || 'Desconocido'
+            identificador: device.deviceId || 'N/A',
+            fabricante: device.manufacturer || detectBrand(allText) || 'Desconocido',
+            tipo: allText.includes('microphone') || allText.includes('mic') ? 'Micrófono' :
+                  allText.includes('speaker') ? 'Altavoz' :
+                  allText.includes('headset') || allText.includes('headphone') ? 'Auriculares' :
+                  'Dispositivo de audio'
           }
         });
         classified = true;
       }
 
-      // Verificar dispositivos de red
-      if (!classified && (matchesPattern(patterns.network, deviceName) || 
-                          matchesPattern(patterns.network, deviceId) || 
-                          matchesPattern(patterns.network, description))) {
+      // 4. Verificar dispositivos de red
+      else if (matchesPattern(patterns.network, allText)) {
         deviceCategories.Red.push({
           ...device,
           type: 'Dispositivo de Red',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
           details: {
-            nombre: device.name || 'Dispositivo de red desconocido',
+            nombre: getImprovedName(device, 'Red'),
             mac: device.macAddress || 'N/A',
             descripcion: device.description || 'N/A',
-            fabricante: device.manufacturer || 'Desconocido'
+            fabricante: device.manufacturer || detectBrand(allText) || 'Desconocido',
+            tipo: allText.includes('wireless') || allText.includes('wifi') || allText.includes('wlan') ? 'Inalámbrico' :
+                  allText.includes('ethernet') || allText.includes('lan') ? 'Ethernet' :
+                  allText.includes('bluetooth') ? 'Bluetooth' : 'Red'
           }
         });
         classified = true;
       }
 
-      // Verificar dispositivos USB
-      if (!classified && (matchesPattern(patterns.usb, deviceName) || 
-                          matchesPattern(patterns.usb, deviceId) || 
-                          matchesPattern(patterns.usb, description))) {
+      // 5. Verificar dispositivos de almacenamiento
+      else if (matchesPattern(patterns.storage, allText)) {
+        deviceCategories.Almacenamiento.push({
+          ...device,
+          type: 'Almacenamiento',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
+          details: {
+            nombre: getImprovedName(device, 'Almacenamiento'),
+            descripcion: device.description || 'N/A',
+            identificador: device.deviceId || 'N/A',
+            fabricante: device.manufacturer || detectBrand(allText) || 'Desconocido',
+            tipo: allText.includes('ssd') ? 'SSD' :
+                  allText.includes('nvme') ? 'NVMe' :
+                  allText.includes('hdd') ? 'HDD' :
+                  allText.includes('flash') || allText.includes('usb') ? 'USB' :
+                  'Almacenamiento'
+          }
+        });
+        classified = true;
+      }
+
+      // 6. Verificar dispositivos USB
+      else if (matchesPattern(patterns.usb, allText)) {
         deviceCategories.USB.push({
           ...device,
           type: 'Dispositivo USB',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
           details: {
-            nombre: device.name || 'Dispositivo USB desconocido',
+            nombre: getImprovedName(device, 'USB'),
             identificador: device.deviceId || 'N/A',
             descripcion: device.description || 'N/A',
-            fabricante: device.manufacturer || 'Desconocido'
+            fabricante: device.manufacturer || detectBrand(allText) || 'Desconocido',
+            puerto: deviceId.includes('hub') ? 'Hub USB' : 
+                    device.port || 'Puerto USB'
           }
         });
         classified = true;
       }
 
-      // Clasificación de dispositivos PCI
-      if (!classified && (deviceId.startsWith('pci') || 
-                          deviceName.includes('pci') || 
-                          description.includes('pci'))) {
+      // 7. Verificar periféricos
+      else if (matchesPattern(patterns.peripheral, allText)) {
+        deviceCategories.Periféricos.push({
+          ...device,
+          type: 'Periférico',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
+          details: {
+            nombre: getImprovedName(device, 'Periférico'),
+            descripcion: device.description || 'N/A',
+            identificador: device.deviceId || 'N/A',
+            fabricante: device.manufacturer || detectBrand(allText) || 'Desconocido',
+            tipo: allText.includes('keyboard') ? 'Teclado' :
+                  allText.includes('mouse') ? 'Ratón' :
+                  allText.includes('camera') || allText.includes('webcam') ? 'Cámara' :
+                  allText.includes('gamepad') || allText.includes('controller') ? 'Controlador de juego' :
+                  'Periférico'
+          }
+        });
+        classified = true;
+      }
+
+      // 8. Clasificación de dispositivos PCI
+      else if (matchesPattern(patterns.pci, allText) || 
+               deviceId.startsWith('pci') || 
+               deviceName.includes('pci') || 
+               description.includes('pci')) {
         deviceCategories.PCI.push({
           ...device,
           type: 'Dispositivo PCI',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
           details: {
-            nombre: device.name || 'Dispositivo PCI desconocido',
+            nombre: getImprovedName(device, 'PCI'),
             descripcion: device.description || 'N/A',
             identificador: device.deviceId || 'N/A',
-            fabricante: device.manufacturer || 'Desconocido'
+            fabricante: device.manufacturer || detectBrand(allText) || 'Desconocido',
+            bus: device.bus || deviceId.split(':')[0] || 'N/A'
           }
         });
         classified = true;
       }
 
-      // Si no se clasifica, se envía a Otros
+      // 9. Si no se clasifica, se envía a Otros
       if (!classified) {
+        // Intentar una última vez detectar una marca conocida para mejorar la descripción
+        const brand = detectBrand(allText);
+        
         deviceCategories.Otros.push({
           ...device,
-          type: 'Otro dispositivo',
+          type: 'Dispositivo de hardware',
+          originalData: JSON.parse(JSON.stringify(device)), // Guardar copia de datos originales
           details: {
-            nombre: device.name || 'Dispositivo desconocido',
+            nombre: device.name || (brand ? `Dispositivo ${brand}` : 'Dispositivo desconocido'),
             identificador: device.deviceId || 'N/A',
-            descripcion: device.description || 'N/A'
+            descripcion: device.description || 'N/A',
+            fabricante: device.manufacturer || brand || 'Desconocido'
           }
         });
       }
@@ -544,7 +673,7 @@ function PlayerDetail({ apiUrl }) {
                   </div>
                   <div className="driver-additional-info">
                     <span>
-                      <strong>Firmado:</strong> {driver.isSigned ? 'Sí' : 'No'}
+                      <strong<strong>Firmado:</strong> {driver.isSigned ? 'Sí' : 'No'}
                     </span>
                     <span>
                       <strong>Ruta:</strong> {driver.pathName || 'N/A'}
@@ -565,6 +694,27 @@ function PlayerDetail({ apiUrl }) {
                 {/* Resumen detallado de dispositivos */}
                 <div className="devices-summary">
                   <h4>Resumen de Dispositivos</h4>
+                  
+                  {/* Filtro de búsqueda de dispositivos */}
+                  <div className="device-search">
+                    <input
+                      type="text"
+                      placeholder="Buscar dispositivos..."
+                      value={deviceFilter}
+                      onChange={(e) => setDeviceFilter(e.target.value)}
+                      className="device-search-input"
+                    />
+                    {deviceFilter && (
+                      <button 
+                        className="device-search-clear" 
+                        onClick={() => setDeviceFilter('')}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Resumen de categorías */}
                   {(() => {
                     const categorizedDevices = classifyDevices(monitorData.usbDevices);
                     return (
@@ -572,7 +722,13 @@ function PlayerDetail({ apiUrl }) {
                         {Object.entries(categorizedDevices)
                           .filter(([_, devices]) => devices.length > 0)
                           .map(([category, devices]) => (
-                            <div key={category} className="device-summary-item">
+                            <div 
+                              key={category} 
+                              className="device-summary-item"
+                              onClick={() => {
+                                setDeviceFilter(category.toLowerCase());
+                              }}
+                            >
                               <span>{category}:</span>
                               <span>{devices.length}</span>
                             </div>
@@ -586,33 +742,164 @@ function PlayerDetail({ apiUrl }) {
                 {/* Desglose detallado por categoría */}
                 {(() => {
                   const categorizedDevices = classifyDevices(monitorData.usbDevices);
-                  return Object.entries(categorizedDevices)
-                    .filter(([_, devices]) => devices.length > 0)
-                    .map(([category, devices]) => (
-                      <div key={category} className="device-category">
-                        <h4>{category} ({devices.length})</h4>
-                        <div className="device-list">
-                          {devices.map((device, index) => (
-                            <div key={index} className="device-item">
-                              <div className="device-main-info">
-                                <strong>{device.details.nombre || 'Dispositivo sin nombre'}</strong>
-                                <span className="device-type">{device.type}</span>
+                  
+                  // Lista de dispositivos potencialmente sospechosos para analizar
+                  const suspiciousPatterns = [
+                    { pattern: /keylogger/i, reason: 'Posible keylogger' },
+                    { pattern: /rubberducky/i, reason: 'Dispositivo USB potencialmente malicioso' },
+                    { pattern: /badusb/i, reason: 'Dispositivo BadUSB potencial' },
+                    { pattern: /unknown/i, reason: 'Dispositivo sin identificar' },
+                    { pattern: /virtual/i, reason: 'Dispositivo virtual' },
+                    { pattern: /phantom/i, reason: 'Dispositivo fantasma' },
+                    { pattern: /usb redirector/i, reason: 'Redireccionador USB' },
+                    { pattern: /remote/i, reason: 'Posible dispositivo remoto' }
+                  ];
+                  
+                  // Función para detectar dispositivos sospechosos
+                  const checkIfSuspicious = (device) => {
+                    const allText = `${device.details.nombre} ${device.details.descripcion} ${device.details.identificador}`.toLowerCase();
+                    for (const { pattern, reason } of suspiciousPatterns) {
+                      if (pattern.test(allText)) {
+                        return reason;
+                      }
+                    }
+                    return null;
+                  };
+                  
+                  // Función para verificar si un dispositivo coincide con el filtro
+                  const matchesFilter = (device, category) => {
+                    if (!deviceFilter) return true;
+                    
+                    const searchLower = deviceFilter.toLowerCase();
+                    const categoryMatch = category.toLowerCase().includes(searchLower);
+                    const nameMatch = (device.details.nombre || '').toLowerCase().includes(searchLower);
+                    const descMatch = (device.details.descripcion || '').toLowerCase().includes(searchLower);
+                    const idMatch = (device.details.identificador || '').toLowerCase().includes(searchLower);
+                    const typeMatch = (device.type || '').toLowerCase().includes(searchLower);
+                    const manufacturerMatch = (device.details.fabricante || '').toLowerCase().includes(searchLower);
+                    
+                    return categoryMatch || nameMatch || descMatch || idMatch || typeMatch || manufacturerMatch;
+                  };
+                  
+                  // Modal para detalles del dispositivo
+                  const renderDeviceDetailsModal = () => {
+                    if (!selectedDeviceDetails) return null;
+                    
+                    return (
+                      <div className="device-details-modal" onClick={() => setSelectedDeviceDetails(null)}>
+                        <div className="device-details-content" onClick={(e) => e.stopPropagation()}>
+                          <div className="device-details-header">
+                            <h3>{selectedDeviceDetails.details.nombre || 'Detalles del dispositivo'}</h3>
+                            <button 
+                              className="device-details-close"
+                              onClick={() => setSelectedDeviceDetails(null)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div className="device-details-body">
+                            {Object.entries(selectedDeviceDetails)
+                              .filter(([key]) => key !== 'details')
+                              .map(([key, value]) => {
+                                // No mostrar objetos anidados aquí
+                                if (typeof value === 'object' && value !== null) return null;
+                                return (
+                                  <div key={key} className="device-property">
+                                    <div className="device-property-key">{key}</div>
+                                    <div className="device-property-value">{String(value)}</div>
+                                  </div>
+                                );
+                              })}
+                            {/* Mostrar detalles específicos */}
+                            {Object.entries(selectedDeviceDetails.details).map(([key, value]) => (
+                              <div key={key} className="device-property">
+                                <div className="device-property-key">{key.charAt(0).toUpperCase() + key.slice(1)}</div>
+                                <div className="device-property-value">{value}</div>
                               </div>
-                              <div className="device-additional-info">
-                                {Object.entries(device.details)
-                                  .filter(([key]) => key !== 'nombre')
-                                  .map(([key, value]) => (
-                                    <span key={key}>
-                                      <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {value}
-                                    </span>
-                                  ))
-                                }
+                            ))}
+                            
+                            {selectedDeviceDetails.raw && (
+                              <div className="device-property device-raw-data">
+                                <div className="device-property-key">Datos originales</div>
+                                <div className="device-property-value">
+                                  <pre>{JSON.stringify(selectedDeviceDetails.raw, null, 2)}</pre>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            )}
+                          </div>
                         </div>
                       </div>
-                    ))
+                    );
+                  };
+                  
+                  // Filtrar y mostrar categorías que coinciden con el filtro
+                  const filteredCategories = Object.entries(categorizedDevices)
+                    .map(([category, devices]) => {
+                      const filteredDevices = devices.filter(device => matchesFilter(device, category));
+                      return { category, devices: filteredDevices };
+                    })
+                    .filter(({ devices }) => devices.length > 0);
+                  
+                  // Si no hay coincidencias con el filtro
+                  if (deviceFilter && filteredCategories.length === 0) {
+                    return (
+                      <div className="no-devices-message">
+                        No se encontraron dispositivos que coincidan con "{deviceFilter}".
+                        <button 
+                          className="device-filter-clear-btn"
+                          onClick={() => setDeviceFilter('')}
+                        >
+                          Limpiar filtro
+                        </button>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <>
+                      {filteredCategories.map(({ category, devices }) => (
+                        <div key={category} className="device-category">
+                          <h4>{category} ({devices.length})</h4>
+                          <div className="device-list">
+                            {devices.map((device, index) => {
+                              const suspiciousReason = checkIfSuspicious(device);
+                              return (
+                                <div 
+                                  key={index} 
+                                  className={`device-item ${suspiciousReason ? 'device-suspicious' : ''}`}
+                                  title={suspiciousReason || ''}
+                                  onClick={() => setSelectedDeviceDetails({...device, raw: device.originalData || null})}
+                                >
+                                  <div className="device-main-info">
+                                    <strong>{device.details.nombre || 'Dispositivo sin nombre'}</strong>
+                                    <span className="device-type">{device.type}</span>
+                                  </div>
+                                  <div className="device-additional-info">
+                                    {suspiciousReason && (
+                                      <span className="suspicious-reason">
+                                        <strong>Alerta:</strong> {suspiciousReason}
+                                      </span>
+                                    )}
+                                    {Object.entries(device.details)
+                                      .filter(([key]) => key !== 'nombre')
+                                      .map(([key, value]) => (
+                                        <span key={key}>
+                                          <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {value}
+                                        </span>
+                                      ))
+                                    }
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Renderizar el modal si hay un dispositivo seleccionado */}
+                      {renderDeviceDetailsModal()}
+                    </>
+                  );
                 })()}
               </div>
             ) : (
