@@ -13,7 +13,7 @@ function PlayerDetail({ apiUrl }) {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Cargar datos del jugador
+  // Cargar datos del jugador usando useCallback
   const loadPlayerData = useCallback(async () => {
     try {
       setLoading(true);
@@ -85,15 +85,6 @@ function PlayerDetail({ apiUrl }) {
     );
   };
 
-  // Función para formatear objetos
-  const formatObjectForDisplay = (obj) => {
-    if (!obj || typeof obj !== 'object') return 'N/A';
-    return Object.entries(obj)
-      .filter(([_, value]) => value !== null && value !== undefined)
-      .map(([key, value]) => `${key}: ${value}`)
-      .join(', ');
-  };
-
   return (
     <div className="player-detail">
       <div className="back-link">
@@ -134,7 +125,110 @@ function PlayerDetail({ apiUrl }) {
       </div>
       
       <div className="tab-content">
-        {/* Tabs anteriores... */}
+        {activeTab === 'overview' && (
+          <div className="overview-tab">
+            <div className="info-card">
+              <h3>Información General</h3>
+              <div className="info-row">
+                <div className="info-label">Última actividad:</div>
+                <div className="info-value">{player.lastSeen ? new Date(player.lastSeen).toLocaleString() : 'N/A'}</div>
+              </div>
+              <div className="info-row">
+                <div className="info-label">Inicio del PC:</div>
+                <div className="info-value">{player.pcStartTime || 'N/A'}</div>
+              </div>
+              <div className="info-row">
+                <div className="info-label">Inicio del Monitor:</div>
+                <div className="info-value">
+                  {player.clientStartTime ? new Date(player.clientStartTime).toLocaleString() : 'N/A'}
+                </div>
+              </div>
+            </div>
+            
+            {monitorData?.hardwareInfo && (
+              <div className="info-card">
+                <h3>Hardware</h3>
+                <div className="info-row">
+                  <div className="info-label">CPU:</div>
+                  <div className="info-value">{monitorData.hardwareInfo.cpu || 'N/A'}</div>
+                </div>
+                <div className="info-row">
+                  <div className="info-label">GPU:</div>
+                  <div className="info-value">{monitorData.hardwareInfo.gpu || 'N/A'}</div>
+                </div>
+                <div className="info-row">
+                  <div className="info-label">RAM:</div>
+                  <div className="info-value">{monitorData.hardwareInfo.ram || 'N/A'}</div>
+                </div>
+              </div>
+            )}
+            
+            {monitorData?.systemInfo && (
+              <div className="info-card">
+                <h3>Sistema Operativo</h3>
+                <div className="info-row">
+                  <div className="info-label">Windows:</div>
+                  <div className="info-value">{monitorData.systemInfo.windowsVersion || 'N/A'}</div>
+                </div>
+                <div className="info-row">
+                  <div className="info-label">DirectX:</div>
+                  <div className="info-value">{monitorData.systemInfo.directXVersion || 'N/A'}</div>
+                </div>
+                <div className="info-row">
+                  <div className="info-label">Driver GPU:</div>
+                  <div className="info-value">{monitorData.systemInfo.gpuDriverVersion || 'N/A'}</div>
+                </div>
+              </div>
+            )}
+            
+            {monitorData?.usbDevices && monitorData.usbDevices.length > 0 && (
+              <div className="info-card">
+                <h3>Dispositivos USB</h3>
+                <div className="usb-devices">
+                  {monitorData.usbDevices.slice(0, 5).map((device, index) => (
+                    <div key={index} className="device-item">
+                      <div className="device-name">{device.name || 'Dispositivo desconocido'}</div>
+                      <div className="device-id">{device.deviceId}</div>
+                    </div>
+                  ))}
+                  {monitorData.usbDevices.length > 5 && (
+                    <div className="more-devices">
+                      +{monitorData.usbDevices.length - 5} dispositivos más
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {screenshots.length > 0 && (
+              <div className="info-card">
+                <h3>Screenshots Recientes</h3>
+                <div className="screenshots-preview">
+                  {screenshots.slice(0, 3).map((screenshot) => (
+                    <Link 
+                      key={screenshot._id} 
+                      to={`/screenshot/${screenshot._id}`} 
+                      className="screenshot-preview-item"
+                    >
+                      <img 
+                        src={`data:image/jpeg;base64,${screenshot.screenshot}`} 
+                        alt={`Screenshot de ${activisionId}`}
+                      />
+                      <div className="screenshot-preview-time">
+                        {new Date(screenshot.timestamp).toLocaleString()}
+                      </div>
+                    </Link>
+                  ))}
+                  {screenshots.length > 3 && (
+                    <div className="more-screenshots">
+                      +{screenshots.length - 3} screenshots más
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {activeTab === 'system' && (
           <div className="system-tab">
