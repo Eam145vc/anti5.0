@@ -673,7 +673,7 @@ function PlayerDetail({ apiUrl }) {
                   </div>
                   <div className="driver-additional-info">
                     <span>
-                      <strong<strong>Firmado:</strong> {driver.isSigned ? 'Sí' : 'No'}
+                      <strong>Firmado:</strong> {driver.isSigned ? 'Sí' : 'No'}
                     </span>
                     <span>
                       <strong>Ruta:</strong> {driver.pathName || 'N/A'}
