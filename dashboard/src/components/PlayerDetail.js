@@ -13,29 +13,21 @@ function PlayerDetail({ apiUrl }) {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Cargar datos del jugador
+  // Cargar datos del jugador usando useCallback
   const loadPlayerData = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Intentar obtener el jugador directamente por ID
-      try {
-        const playerResponse = await axios.get(`${apiUrl}/players/${activisionId}`);
-        setPlayer(playerResponse.data);
-      } catch (playerError) {
-        console.error('Error obteniendo jugador específico:', playerError);
-        
-        // Fallback: buscar en la lista de jugadores
-        const allPlayersResponse = await axios.get(`${apiUrl}/players`);
-        const playerData = allPlayersResponse.data.find(p => p.activisionId === activisionId);
-        
-        if (!playerData) {
-          setError('Jugador no encontrado');
-          return;
-        }
-        
-        setPlayer(playerData);
+      // Cargar información básica del jugador
+      const playerResponse = await axios.get(`${apiUrl}/players`);
+      const playerData = playerResponse.data.find(p => p.activisionId === activisionId);
+      
+      if (!playerData) {
+        setError('Jugador no encontrado');
+        return;
       }
+      
+      setPlayer(playerData);
       
       // Cargar datos de monitoreo más recientes
       const monitorResponse = await axios.get(`${apiUrl}/monitor/${activisionId}`);
@@ -51,10 +43,8 @@ function PlayerDetail({ apiUrl }) {
       
       setError(null);
     } catch (err) {
-      console.error('Error completo:', err);
-      setError('Error cargando datos del jugador: ' + 
-        (err.response?.data?.error || err.message || 'Error desconocido')
-      );
+      setError('Error cargando datos del jugador');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -64,6 +54,14 @@ function PlayerDetail({ apiUrl }) {
   useEffect(() => {
     loadPlayerData();
   }, [loadPlayerData]);
+
+  if (loading) {
+    return <div className="loading">Cargando datos del jugador...</div>;
+  }
+
+  if (error || !player) {
+    return <div className="error">{error || 'No se encontró información del jugador'}</div>;
+  }
 
   // Función de utilidad para renderizar una lista de objetos
   const renderObjectList = (items, renderItem, maxItems = 50) => {
@@ -105,47 +103,6 @@ function PlayerDetail({ apiUrl }) {
     }
   };
 
-  // Renderizado condicional de error y carga
-  if (loading) {
-    return (
-      <div className="loading">
-        <div className="spinner"></div>
-        <p>Cargando datos del jugador...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="error-container">
-        <div className="error-icon">⚠️</div>
-        <h2>Error al cargar datos</h2>
-        <p>{error}</p>
-        <div className="error-details">
-          <p>Posibles causas:</p>
-          <ul>
-            <li>El jugador no existe</li>
-            <li>Problemas de conexión con el servidor</li>
-            <li>ID de jugador incorrecto</li>
-          </ul>
-        </div>
-        <button onClick={loadPlayerData} className="retry-button">
-          Reintentar
-        </button>
-      </div>
-    );
-  }
-
-  if (!player) {
-    return (
-      <div className="no-player">
-        <h2>Jugador no encontrado</h2>
-        <p>Verifique el ID del jugador e intente nuevamente.</p>
-      </div>
-    );
-  }
-
-  // Renderizado principal del componente
   return (
     <div className="player-detail">
       <div className="back-link">
@@ -193,9 +150,7 @@ function PlayerDetail({ apiUrl }) {
               <h3>Información General</h3>
               <div className="info-row">
                 <div className="info-label">Última actividad:</div>
-                <div className="info-value">
-                  {player.lastSeen ? new Date(player.lastSeen).toLocaleString() : 'N/A'}
-                </div>
+                <div className="info-value">{player.lastSeen ? new Date(player.lastSeen).toLocaleString() : 'N/A'}</div>
               </div>
               <div className="info-row">
                 <div className="info-label">Inicio del PC:</div>
@@ -204,9 +159,7 @@ function PlayerDetail({ apiUrl }) {
               <div className="info-row">
                 <div className="info-label">Inicio del Monitor:</div>
                 <div className="info-value">
-                  {player.clientStartTime 
-                    ? new Date(player.clientStartTime).toLocaleString() 
-                    : 'N/A'}
+                  {player.clientStartTime ? new Date(player.clientStartTime).toLocaleString() : 'N/A'}
                 </div>
               </div>
             </div>
@@ -234,21 +187,34 @@ function PlayerDetail({ apiUrl }) {
                 <h3>Sistema Operativo</h3>
                 <div className="info-row">
                   <div className="info-label">Windows:</div>
-                  <div className="info-value">
-                    {monitorData.systemInfo.windowsVersion || 'N/A'}
-                  </div>
+                  <div className="info-value">{monitorData.systemInfo.windowsVersion || 'N/A'}</div>
                 </div>
                 <div className="info-row">
                   <div className="info-label">DirectX:</div>
-                  <div className="info-value">
-                    {monitorData.systemInfo.directXVersion || 'N/A'}
-                  </div>
+                  <div className="info-value">{monitorData.systemInfo.directXVersion || 'N/A'}</div>
                 </div>
                 <div className="info-row">
                   <div className="info-label">Driver GPU:</div>
-                  <div className="info-value">
-                    {monitorData.systemInfo.gpuDriverVersion || 'N/A'}
-                  </div>
+                  <div className="info-value">{monitorData.systemInfo.gpuDriverVersion || 'N/A'}</div>
+                </div>
+              </div>
+            )}
+            
+            {monitorData?.usbDevices && monitorData.usbDevices.length > 0 && (
+              <div className="info-card">
+                <h3>Dispositivos USB</h3>
+                <div className="usb-devices">
+                  {monitorData.usbDevices.slice(0, 5).map((device, index) => (
+                    <div key={index} className="device-item">
+                      <div className="device-name">{device.name || 'Dispositivo desconocido'}</div>
+                      <div className="device-id">{device.deviceId}</div>
+                    </div>
+                  ))}
+                  {monitorData.usbDevices.length > 5 && (
+                    <div className="more-devices">
+                      +{monitorData.usbDevices.length - 5} dispositivos más
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -288,26 +254,23 @@ function PlayerDetail({ apiUrl }) {
             <h3>Información del Sistema</h3>
             {monitorData?.systemInfo ? (
               <div className="system-info">
-                <div className="system-details">
-                  <h4>Información del Sistema Operativo</h4>
-                  {Object.entries(monitorData.systemInfo).map(([key, value]) => (
-                    <div key={key} className="system-item">
-                      <span className="system-label">{key}:</span>
-                      <span className="system-value">{value || 'N/A'}</span>
-                    </div>
-                  ))}
-                </div>
+                {Object.entries(monitorData.systemInfo).map(([key, value]) => (
+                  <div key={key} className="system-item">
+                    <span className="system-label">{key}:</span>
+                    <span className="system-value">{value || 'N/A'}</span>
+                  </div>
+                ))}
                 
                 {monitorData.hardwareInfo && (
-                  <div className="hardware-details">
-                    <h4>Información de Hardware</h4>
+                  <>
+                    <h4>Hardware</h4>
                     {Object.entries(monitorData.hardwareInfo).map(([key, value]) => (
                       <div key={key} className="system-item">
                         <span className="system-label">{key}:</span>
                         <span className="system-value">{value || 'N/A'}</span>
                       </div>
                     ))}
-                  </div>
+                  </>
                 )}
               </div>
             ) : (
@@ -318,33 +281,16 @@ function PlayerDetail({ apiUrl }) {
 
         {activeTab === 'processes' && (
           <div className="processes-tab">
-            <h3>Procesos en Ejecución</h3>
+            <h3>Procesos</h3>
             {renderObjectList(
               monitorData?.processes, 
               (process) => (
                 <div className="process-details">
-                  <div className="process-main-info">
-                    <span className="process-name">
-                      <strong>Nombre:</strong> {process.name || 'Proceso desconocido'}
-                    </span>
-                    <span className="process-pid">
-                      <strong>PID:</strong> {process.pid || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="process-additional-info">
-                    <span className="process-path">
-                      <strong>Ruta:</strong> {process.filePath || 'N/A'}
-                    </span>
-                    <span className="process-hash">
-                      <strong>Hash SHA256:</strong> 
-                      {process.fileHash ? 
-                        <code>{process.fileHash}</code> : 
-                        'No disponible'}
-                    </span>
-                  </div>
+                  <span>Nombre: {process.name || 'Proceso desconocido'}</span>
+                  <span>PID: {process.pid || 'N/A'}</span>
+                  <span>Hash SHA256: {process.fileHash || 'N/A'}</span>
                 </div>
-              ),
-              100 // Mostrar hasta 100 procesos
+              )
             )}
           </div>
         )}
@@ -356,56 +302,28 @@ function PlayerDetail({ apiUrl }) {
               monitorData?.networkConnections, 
               (connection) => (
                 <div className="network-connection-details">
-                  <div className="connection-main-info">
-                    <span>
-                      <strong>Local:</strong> {connection.localAddress}:{connection.localPort}
-                    </span>
-                    <span>
-                      <strong>Remoto:</strong> {connection.remoteAddress}:{connection.remotePort}
-                    </span>
-                  </div>
-                  <div className="connection-additional-info">
-                    <span>
-                      <strong>Estado:</strong> {connection.state || 'N/A'}
-                    </span>
-                    <span>
-                      <strong>Protocolo:</strong> {connection.protocol || 'N/A'}
-                    </span>
-                  </div>
+                  <span>Local: {connection.localAddress}:{connection.localPort}</span>
+                  <span>Remoto: {connection.remoteAddress}:{connection.remotePort}</span>
+                  <span>Estado: {connection.state || 'N/A'}</span>
+                  <span>Protocolo: {connection.protocol || 'N/A'}</span>
                 </div>
-              ),
-              100 // Mostrar hasta 100 conexiones
+              )
             )}
           </div>
         )}
 
         {activeTab === 'drivers' && (
           <div className="drivers-tab">
-            <h3>Drivers del Sistema</h3>
+            <h3>Drivers Cargados</h3>
             {renderObjectList(
               monitorData?.loadedDrivers, 
               (driver) => (
                 <div className="driver-details">
-                  <div className="driver-main-info">
-                    <span>
-                      <strong>Nombre:</strong> {driver.name || 'Driver desconocido'}
-                    </span>
-                    <span>
-                      <strong>Versión:</strong> {driver.version
-              || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="driver-additional-info">
-                    <span>
-                      <strong>Firmado:</strong> {driver.isSigned ? 'Sí' : 'No'}
-                    </span>
-                    <span>
-                      <strong>Ruta:</strong> {driver.pathName || 'N/A'}
-                    </span>
-                  </div>
+                  <span>Nombre: {driver.name || 'Driver desconocido'}</span>
+                  <span>Versión: {driver.version || 'N/A'}</span>
+                  <span>Firmado: {driver.isSigned ? 'Sí' : 'No'}</span>
                 </div>
-              ),
-              100 // Mostrar hasta 100 drivers
+              )
             )}
           </div>
         )}
@@ -450,7 +368,7 @@ function PlayerDetail({ apiUrl }) {
                       </div>
                       <div>
                         <strong>ID de Hardware:</strong> {device.hardwareId || 'N/A'}
-                      </div>
+                  </div>
                       <div>
                         <strong>Tipo:</strong> {classifyUsbDevice(device)}
                       </div>
