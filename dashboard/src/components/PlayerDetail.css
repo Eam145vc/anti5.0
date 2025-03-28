@@ -177,38 +177,412 @@
   text-overflow: ellipsis;
 }
 
-/* Dispositivos USB */
-.usb-devices {
+/* Dispositivos */
+.devices-detailed {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.devices-summary {
+  background-color: #f0f7ff;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.devices-summary h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: #1565c0;
+  font-size: 1rem;
+  border-bottom: 1px solid #bbdefb;
+  padding-bottom: 0.5rem;
+}
+
+.device-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.device-summary-item {
+  display: flex;
+  justify-content: space-between;
+  background-color: #ffffff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  align-items: center;
+}
+
+.device-summary-item span:first-child {
+  font-weight: 500;
+  color: #333;
+}
+
+.device-summary-item span:last-child {
+  font-weight: 600;
+  color: #1976d2;
+  background-color: #e3f2fd;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.device-category {
+  margin-bottom: 1.5rem;
+}
+
+.device-category h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.device-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 0.75rem;
 }
 
 .device-item {
-  background-color: #f5f5f5;
+  background-color: #f9f9f9;
   padding: 0.75rem;
   border-radius: 6px;
   border: 1px solid #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.device-name {
+.device-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.device-main-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.device-main-info strong {
   font-weight: 600;
   color: #333;
-  margin-bottom: 0.25rem;
+  flex-grow: 1;
 }
 
-.device-id {
-  font-size: 0.8rem;
+.device-type {
+  font-size: 0.75rem;
+  background-color: #e8eaf6;
+  color: #3f51b5;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.device-additional-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.device-additional-info span {
+  font-size: 0.85rem;
+  color: #555;
+  display: flex;
+  align-items: baseline;
+}
+
+.device-additional-info strong {
+  min-width: 95px;
+  margin-right: 0.5rem;
   color: #666;
-  word-break: break-all;
+  font-weight: 500;
 }
 
-.more-devices {
-  grid-column: 1 / -1;
+/* Estilos específicos por tipo de dispositivo */
+.device-category:nth-child(3) .device-type {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.device-category:nth-child(4) .device-type {
+  background-color: #fff8e1;
+  color: #f57f17;
+}
+
+.device-category:nth-child(5) .device-type {
+  background-color: #f3e5f5;
+  color: #8e24aa;
+}
+
+.device-category:nth-child(6) .device-type {
+  background-color: #e1f5fe;
+  color: #0288d1;
+}
+
+.device-category:nth-child(7) .device-type {
+  background-color: #fbe9e7;
+  color: #d84315;
+}
+
+.device-category:nth-child(8) .device-type {
+  background-color: #e8eaf6;
+  color: #3949ab;
+}
+
+/* Indicadores de posibles dispositivos sospechosos */
+.device-suspicious {
+  position: relative;
+}
+
+.device-suspicious::before {
+  content: '⚠️';
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1rem;
+}
+
+.device-suspicious .device-main-info {
+  border-bottom-color: #ffcdd2;
+}
+
+.device-suspicious .device-main-info strong {
+  color: #c62828;
+}
+
+/* Pequeñas insignias para dispositivos relevantes */
+.device-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.device-badge.new {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.device-badge.changed {
+  background-color: #fff8e1;
+  color: #f57f17;
+}
+
+.no-devices-message {
   text-align: center;
-  color: #666;
+  padding: 2rem;
+  color: #757575;
+  background-color: #f5f5f5;
+  border-radius: 8px;
   font-style: italic;
+}
+
+/* Buscador de dispositivos */
+.device-search {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.device-search-input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.device-search-input:focus {
+  outline: none;
+  border-color: #bbdefb;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.device-search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-search-clear:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.device-summary-item {
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.device-summary-item:hover {
+  background-color: #e3f2fd;
+  transform: translateY(-1px);
+}
+
+/* Modal de detalles de dispositivo */
+.device-details-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-details-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.device-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.device-details-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1976d2;
+}
+
+.device-details-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #757575;
+  padding: 0.25rem;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-details-close:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.device-details-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.device-property {
+  padding: 0.75rem;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+}
+
+.device-property-key {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: #333;
+  font-size: 0.85rem;
+}
+
+.device-property-value {
+  font-size: 0.9rem;
+  word-break: break-word;
+  color: #444;
+}
+
+.device-raw-data {
+  grid-column: 1 / -1;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.device-raw-data pre {
+  margin: 0;
   padding: 0.5rem;
+  font-size: 0.8rem;
+  color: #333;
+  overflow-x: auto;
+}
+
+.device-filter-clear-btn {
+  display: block;
+  margin: 1rem auto;
+  padding: 0.5rem 1rem;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.device-filter-clear-btn:hover {
+  background-color: #bbdefb;
+}
+
+/* Estilos para elementos sospechosos */
+.suspicious-reason {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.suspicious-reason strong {
+  color: #b71c1c;
+}
+
+/* Cursor interactivo */
+.device-item {
+  cursor: pointer;
 }
 
 /* Screenshots */
@@ -240,7 +614,7 @@
   object-fit: cover;
 }
 
-.screenshot-preview-time,
+.screenshot-preview-time.screenshot-preview-time,
 .screenshot-thumbnail .screenshot-info {
   padding: 0.75rem;
   background-color: white;
@@ -332,6 +706,70 @@
   background-color: #ffebee;
 }
 
+/* Spinner para carga */
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 1rem;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #3f51b5;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error container */
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  background-color: #ffebee;
+  border-radius: 8px;
+  margin: 1rem;
+  border: 1px solid #ffcdd2;
+}
+
+.error-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.error-details {
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.retry-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+  background-color: #303f9f;
+}
+
+/* Mensaje de jugador no encontrado */
+.no-player {
+  text-align: center;
+  padding: 3rem 1rem;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  color: #757575;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .player-header {
@@ -357,6 +795,20 @@
   .screenshots-grid,
   .screenshots-preview,
   .object-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .device-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .device-details-content {
+    width: 95%;
+    max-height: 95vh;
+    padding: 1rem;
+  }
+  
+  .device-details-body {
     grid-template-columns: 1fr;
   }
 }
