@@ -1,5 +1,8 @@
+/* Estilos generales */
 .player-detail {
   padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .back-link {
@@ -9,17 +12,30 @@
 .back-link a {
   color: #3f51b5;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
+.back-link a:hover {
+  color: #303f9f;
+}
+
+/* Encabezado del jugador */
 .player-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-radius: 8px;
 }
 
 .player-header h2 {
   margin: 0;
+  font-size: 1.5rem;
+  color: #333;
 }
 
 .player-info {
@@ -27,10 +43,15 @@
   gap: 0.5rem;
 }
 
-.channel-badge, .status-badge, .game-badge {
+/* Insignias de estado */
+.channel-badge, 
+.status-badge, 
+.game-badge {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
 .channel-badge {
@@ -53,61 +74,77 @@
   color: #f57f17;
 }
 
+/* Pestañas de navegación */
 .player-tabs {
   display: flex;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid #e0e0e0;
   margin-bottom: 1.5rem;
   overflow-x: auto;
+  background-color: #f9f9f9;
 }
 
 .tab {
   padding: 0.75rem 1rem;
   cursor: pointer;
   white-space: nowrap;
+  color: #666;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
 }
 
 .tab:hover {
-  background-color: #f5f5f5;
+  background-color: #f0f0f0;
+  color: #3f51b5;
 }
 
 .tab.active {
   border-bottom: 2px solid #3f51b5;
   color: #3f51b5;
-  font-weight: 500;
+  font-weight: 600;
 }
 
+/* Contenido de las pestañas */
 .tab-content {
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   min-height: 400px;
+  padding: 1.5rem;
 }
 
-/* Información general */
+/* Tarjetas de información */
 .info-card {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: white;
+  background-color: #f9f9f9;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9e9e9;
 }
 
 .info-card h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
+  margin: 0 0 1rem 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #e0e0e0;
-  font-size: 1.1rem;
+  color: #333;
+  font-size: 1.2rem;
 }
 
 .info-row {
   display: flex;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  align-items: center;
 }
 
 .info-label {
-  width: 150px;
-  font-weight: 500;
+  flex: 0 0 150px;
+  font-weight: 600;
+  color: #555;
+}
+
+.info-value {
+  flex-grow: 1;
+  color: #333;
 }
 
 /* Información del sistema */
@@ -115,43 +152,116 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1rem;
-  padding: 1rem;
 }
 
 .system-item {
-  background-color: #f5f5f5;
+  background-color: #f0f0f0;
   padding: 0.75rem;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
-  justify-content
-    : space-between;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .system-label {
   font-weight: 500;
-  margin-right: 0.5rem;
   color: #333;
+  margin-right: 0.5rem;
 }
 
 .system-value {
   color: #666;
   text-align: right;
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dispositivos USB */
+.usb-devices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.device-item {
+  background-color: #f5f5f5;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.device-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.device-id {
+  font-size: 0.8rem;
+  color: #666;
+  word-break: break-all;
+}
+
+.more-devices {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 0.5rem;
+}
+
+/* Screenshots */
+.screenshots-preview,
+.screenshots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.screenshot-preview-item,
+.screenshot-thumbnail {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.screenshot-preview-item:hover,
+.screenshot-thumbnail:hover {
+  transform: scale(1.05);
+}
+
+.screenshot-preview-item img,
+.screenshot-thumbnail img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.screenshot-preview-time,
+.screenshot-thumbnail .screenshot-info {
+  padding: 0.75rem;
+  background-color: white;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
 }
 
 /* Listas de objetos */
 .object-list {
-  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
 }
 
 .object-item {
   background-color: #f9f9f9;
-  margin-bottom: 0.5rem;
-  padding: 0.75rem;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 6px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9e9e9;
 }
 
 .process-details,
@@ -159,7 +269,6 @@
 .driver-details {
   display: flex;
   flex-direction: column;
-  width: 100%;
 }
 
 .process-details span,
@@ -167,104 +276,60 @@
 .driver-details span {
   margin-bottom: 0.25rem;
   color: #333;
-  font-size: 0.9rem;
 }
 
 .more-items {
+  grid-column: 1 / -1;
   text-align: center;
-  color: #666;
-  padding: 0.5rem;
   background-color: #f5f5f5;
-  border-radius: 4px;
-  margin-top: 1rem;
-  font-style: italic;
-}
-
-/* Screenshots */
-.screenshots-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
   padding: 1rem;
-}
-
-.screenshot-thumbnail {
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-
-.screenshot-thumbnail:hover {
-  transform: scale(1.05);
-}
-
-.screenshot-thumbnail img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-}
-
-.screenshot-thumbnail .screenshot-info {
-  padding: 0.5rem;
-  background-color: white;
-  text-align: center;
-  font-size: 0.8rem;
+  border-radius: 6px;
   color: #666;
+  font-style: italic;
 }
 
 /* Historial */
 .monitor-history-list {
-  padding: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
 }
 
 .history-entry {
+  background-color: #f9f9f9;
+  padding: 1rem;
+  border-radius: 6px;
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .history-date {
-  font-weight: 500;
+  font-weight: 600;
+  color: #333;
 }
 
 .history-details {
   color: #666;
 }
 
-/* Dispositivos USB */
-.usb-devices {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.5rem;
-}
-
-.device-item {
-  background-color: #f5f5f5;
-  padding: 0.5rem;
-  border-radius: 4px;
-}
-
-.device-name {
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.device-id {
-  font-size: 0.8rem;
-  color: #757575;
-  margin-top: 0.25rem;
-  word-break: break-all;
-}
-
-.more-devices {
-  grid-column: 1 / -1;
+/* Componentes de carga y error */
+.loading, 
+.error {
   text-align: center;
-  font-style: italic;
-  color: #757575;
-  padding: 0.5rem;
+  padding: 2rem;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.loading {
+  color: #666;
+}
+
+.error {
+  color: #d32f2f;
+  background-color: #ffebee;
 }
 
 /* Responsive adjustments */
@@ -276,27 +341,22 @@
 
   .player-info {
     margin-top: 0.5rem;
+    flex-wrap: wrap;
   }
 
   .player-tabs {
     flex-wrap: wrap;
   }
 
-  .system-info,
-  .screenshots-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  .tab {
+    flex-grow: 1;
+    text-align: center;
   }
-}
 
-/* Componentes de carga y error */
-.loading, .error {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-
-.error {
-  color: #f44336;
-  background-color: #ffebee;
-  border-radius: 4px;
+  .system-info,
+  .screenshots-grid,
+  .screenshots-preview,
+  .object-list {
+    grid-template-columns: 1fr;
+  }
 }
