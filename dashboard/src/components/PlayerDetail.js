@@ -64,25 +64,43 @@ function PlayerDetail({ apiUrl }) {
   }
 
   // Función de utilidad para renderizar una lista de objetos
-  const renderObjectList = (items, renderItem) => {
+  const renderObjectList = (items, renderItem, maxItems = 50) => {
     if (!items || items.length === 0) {
       return <p>No hay información disponible</p>;
     }
 
     return (
       <div className="object-list">
-        {items.slice(0, 50).map((item, index) => (
+        {items.slice(0, maxItems).map((item, index) => (
           <div key={index} className="object-item">
             {renderItem(item)}
           </div>
         ))}
-        {items.length > 50 && (
+        {items.length > maxItems && (
           <div className="more-items">
-            +{items.length - 50} elementos más
+            +{items.length - maxItems} elementos más
           </div>
         )}
       </div>
     );
+  };
+
+  // Función para clasificar dispositivos USB
+  const classifyUsbDevice = (device) => {
+    const deviceName = device.name ? device.name.toLowerCase() : '';
+    if (deviceName.includes('monitor') || deviceName.includes('display')) {
+      return 'Monitor';
+    } else if (deviceName.includes('mouse')) {
+      return 'Ratón';
+    } else if (deviceName.includes('keyboard')) {
+      return 'Teclado';
+    } else if (deviceName.includes('audio') || deviceName.includes('sound')) {
+      return 'Dispositivo de Audio';
+    } else if (deviceName.includes('camera') || deviceName.includes('webcam')) {
+      return 'Cámara/Webcam';
+    } else {
+      return 'Otro dispositivo USB';
+    }
   };
 
   return (
@@ -105,7 +123,7 @@ function PlayerDetail({ apiUrl }) {
       </div>
       
       <div className="player-tabs">
-        {['overview', 'system', 'processes', 'network', 'drivers', 'screenshots', 'history'].map(tab => (
+        {['overview', 'system', 'processes', 'network', 'drivers', 'screenshots', 'usb', 'history'].map(tab => (
           <div 
             key={tab}
             className={`tab ${activeTab === tab ? 'active' : ''}`} 
@@ -118,6 +136,7 @@ function PlayerDetail({ apiUrl }) {
               network: 'Red',
               drivers: 'Drivers',
               screenshots: 'Screenshots',
+              usb: 'Dispositivos',
               history: 'Historial'
             }[tab]}
           </div>
@@ -269,6 +288,7 @@ function PlayerDetail({ apiUrl }) {
                 <div className="process-details">
                   <span>Nombre: {process.name || 'Proceso desconocido'}</span>
                   <span>PID: {process.pid || 'N/A'}</span>
+                  <span>Hash SHA256: {process.fileHash || 'N/A'}</span>
                 </div>
               )
             )}
@@ -285,6 +305,7 @@ function PlayerDetail({ apiUrl }) {
                   <span>Local: {connection.localAddress}:{connection.localPort}</span>
                   <span>Remoto: {connection.remoteAddress}:{connection.remotePort}</span>
                   <span>Estado: {connection.state || 'N/A'}</span>
+                  <span>Protocolo: {connection.protocol || 'N/A'}</span>
                 </div>
               )
             )}
@@ -298,10 +319,66 @@ function PlayerDetail({ apiUrl }) {
               monitorData?.loadedDrivers, 
               (driver) => (
                 <div className="driver-details">
-                  <span>{driver.name || 'Driver desconocido'}</span>
+                  <span>Nombre: {driver.name || 'Driver desconocido'}</span>
                   <span>Versión: {driver.version || 'N/A'}</span>
+                  <span>Firmado: {driver.isSigned ? 'Sí' : 'No'}</span>
                 </div>
               )
+            )}
+          </div>
+        )}
+
+        {activeTab === 'usb' && (
+          <div className="usb-devices-tab">
+            <h3>Dispositivos USB Conectados</h3>
+            {monitorData?.usbDevices && monitorData.usbDevices.length > 0 ? (
+              <div className="usb-devices-detailed">
+                <div className="usb-device-types">
+                  <h4>Resumen por Tipo</h4>
+                  {(() => {
+                    const deviceTypes = monitorData.usbDevices.reduce((acc, device) => {
+                      const type = classifyUsbDevice(device);
+                      acc[type] = (acc[type] || 0) + 1;
+                      return acc;
+                    }, {});
+
+                    return (
+                      <div className="device-type-summary">
+                        {Object.entries(deviceTypes).map(([type, count]) => (
+                          <div key={type} className="device-type-item">
+                            <span>{type}:</span>
+                            <span>{count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <h4>Lista Completa de Dispositivos</h4>
+                {renderObjectList(
+                  monitorData.usbDevices, 
+                  (device) => (
+                    <div className="usb-device-details">
+                      <div>
+                        <strong>Nombre:</strong> {device.name || 'Dispositivo desconocido'}
+                      </div>
+                      <div>
+                        <strong>ID de Dispositivo:</strong> {device.deviceId}
+                      </div>
+                      <div>
+                        <strong>ID de Hardware:</strong> {device.hardwareId || 'N/A'}
+                  </div>
+                      <div>
+                        <strong>Tipo:</strong> {classifyUsbDevice(device)}
+                      </div>
+                    </div>
+                  ),
+                  100 // Mostrar hasta 100 dispositivos
+                )}
+              </div>
+            ) : (
+              <p>No se encontraron dispositivos USB</p>
             )}
           </div>
         )}
@@ -343,6 +420,14 @@ function PlayerDetail({ apiUrl }) {
                     </div>
                     <div className="history-details">
                       <span>Estado: {entry.isGameRunning ? 'Jugando' : 'Inactivo'}</span>
+                      {entry.screenshot && (
+                        <Link 
+                          to={`/screenshot/${entry.screenshot}`} 
+                          className="history-screenshot-link"
+                        >
+                          Ver Screenshot
+                        </Link>
+                      )}
                     </div>
                   </div>
                 ))}
