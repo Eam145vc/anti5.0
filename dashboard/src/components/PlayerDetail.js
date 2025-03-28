@@ -13,6 +13,82 @@ function PlayerDetail({ apiUrl }) {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Función para clasificar y agrupar dispositivos
+  const classifyDevices = (devices) => {
+    const deviceCategories = {
+      USB: [],
+      Monitores: [],
+      PCI: [],
+      Audio: [],
+      Red: [],
+      Otros: []
+    };
+
+    devices.forEach(device => {
+      const deviceName = (device.name || '').toLowerCase();
+      const deviceId = (device.deviceId || '').toLowerCase();
+
+      if (deviceName.includes('monitor') || deviceName.includes('display')) {
+        deviceCategories.Monitores.push({
+          ...device,
+          type: 'Monitor',
+          details: {
+            resolucion: device.resolution || 'N/A',
+            marca: device.manufacturer || 'Desconocida',
+            serialNumber: device.serialNumber || 'N/A'
+          }
+        });
+      } else if (deviceId.startsWith('pci') || deviceName.includes('pci')) {
+        deviceCategories.PCI.push({
+          ...device,
+          type: 'Dispositivo PCI',
+          details: {
+            marca: device.manufacturer || 'Desconocida',
+            descripcion: device.description || 'N/A',
+            vendorId: device.vendorId || 'N/A'
+          }
+        });
+      } else if (deviceName.includes('usb')) {
+        deviceCategories.USB.push({
+          ...device,
+          type: 'Dispositivo USB',
+          details: {
+            hardwareId: device.hardwareId || 'N/A',
+            vendorId: device.vendorId || 'N/A'
+          }
+        });
+      } else if (deviceName.includes('audio') || deviceName.includes('sound')) {
+        deviceCategories.Audio.push({
+          ...device,
+          type: 'Dispositivo de Audio',
+          details: {
+            marca: device.manufacturer || 'Desconocida',
+            tipo: device.audioType || 'N/A'
+          }
+        });
+      } else if (deviceName.includes('network') || deviceName.includes('ethernet')) {
+        deviceCategories.Red.push({
+          ...device,
+          type: 'Dispositivo de Red',
+          details: {
+            mac: device.macAddress || 'N/A',
+            velocidad: device.speed || 'N/A'
+          }
+        });
+      } else {
+        deviceCategories.Otros.push({
+          ...device,
+          type: 'Otro dispositivo',
+          details: {
+            descripcion: device.description || 'N/A'
+          }
+        });
+      }
+    });
+
+    return deviceCategories;
+  };
+
   // Cargar datos del jugador
   const loadPlayerData = useCallback(async () => {
     try {
@@ -85,24 +161,6 @@ function PlayerDetail({ apiUrl }) {
         )}
       </div>
     );
-  };
-
-  // Función para clasificar dispositivos USB
-  const classifyUsbDevice = (device) => {
-    const deviceName = device.name ? device.name.toLowerCase() : '';
-    if (deviceName.includes('monitor') || deviceName.includes('display')) {
-      return 'Monitor';
-    } else if (deviceName.includes('mouse')) {
-      return 'Ratón';
-    } else if (deviceName.includes('keyboard')) {
-      return 'Teclado';
-    } else if (deviceName.includes('audio') || deviceName.includes('sound')) {
-      return 'Dispositivo de Audio';
-    } else if (deviceName.includes('camera') || deviceName.includes('webcam')) {
-      return 'Cámara/Webcam';
-    } else {
-      return 'Otro dispositivo USB';
-    }
   };
 
   // Renderizado condicional de error y carga
@@ -391,8 +449,7 @@ function PlayerDetail({ apiUrl }) {
                       <strong>Nombre:</strong> {driver.name || 'Driver desconocido'}
                     </span>
                     <span>
-                      <strong>Versión:</strong> {driver.version
-              || 'N/A'}
+                      <strong>Versión:</strong> {driver.version || 'N/A'}
                     </span>
                   </div>
                   <div className="driver-additional-info">
@@ -411,25 +468,21 @@ function PlayerDetail({ apiUrl }) {
         )}
 
         {activeTab === 'usb' && (
-          <div className="usb-devices-tab">
-            <h3>Dispositivos USB Conectados</h3>
+          <div className="devices-tab">
+            <h3>Dispositivos Conectados</h3>
             {monitorData?.usbDevices && monitorData.usbDevices.length > 0 ? (
-              <div className="usb-devices-detailed">
-                <div className="usb-device-types">
-                  <h4>Resumen por Tipo</h4>
+              <div className="devices-detailed">
+                {/* Resumen de dispositivos */}
+                <div className="devices-summary">
+                  <h4>Resumen de Dispositivos</h4>
                   {(() => {
-                    const deviceTypes = monitorData.usbDevices.reduce((acc, device) => {
-                      const type = classifyUsbDevice(device);
-                      acc[type] = (acc[type] || 0) + 1;
-                      return acc;
-                    }, {});
-
+                    const categorizedDevices = classifyDevices(monitorData.usbDevices);
                     return (
-                      <div className="device-type-summary">
-                        {Object.entries(deviceTypes).map(([type, count]) => (
-                          <div key={type} className="device-type-item">
-                            <span>{type}:</span>
-                            <span>{count}</span>
+                      <div className="device-summary-grid">
+                        {Object.entries(categorizedDevices).map(([category, devices]) => (
+                          <div key={category} className="device-summary-item">
+                            <span>{category}:</span>
+                            <span>{devices.length}</span>
                           </div>
                         ))}
                       </div>
@@ -437,30 +490,38 @@ function PlayerDetail({ apiUrl }) {
                   })()}
                 </div>
 
-                <h4>Lista Completa de Dispositivos</h4>
-                {renderObjectList(
-                  monitorData.usbDevices, 
-                  (device) => (
-                    <div className="usb-device-details">
-                      <div>
-                        <strong>Nombre:</strong> {device.name || 'Dispositivo desconocido'}
+                {/* Desglose detallado por categoría */}
+                {(() => {
+                  const categorizedDevices = classifyDevices(monitorData.usbDevices);
+                  return Object.entries(categorizedDevices).map(([category, devices]) => (
+                    devices.length > 0 && (
+                      <div key={category} className="device-category">
+                        <h4>{category} ({devices.length})</h4>
+                        <div className="device-list">
+                          {devices.map((device, index) => (
+                            <div key={index} className="device-item">
+                              <div className="device-main-info">
+                                <strong>{device.name || 'Dispositivo sin nombre'}</strong>
+                                <span className="device-type">{device.type}</span>
+                              </div>
+                              <div className="device-additional-info">
+                                <span>ID: {device.deviceId || 'N/A'}</span>
+                                {Object.entries(device.details).map(([key, value]) => (
+                                  <span key={key}>
+                                    <strong>{key}:</strong> {value}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div>
-                        <strong>ID de Dispositivo:</strong> {device.deviceId}
-                      </div>
-                      <div>
-                        <strong>ID de Hardware:</strong> {device.hardwareId || 'N/A'}
-                      </div>
-                      <div>
-                        <strong>Tipo:</strong> {classifyUsbDevice(device)}
-                      </div>
-                    </div>
-                  ),
-                  100 // Mostrar hasta 100 dispositivos
-                )}
+                    )
+                  ));
+                })()}
               </div>
             ) : (
-              <p>No se encontraron dispositivos USB</p>
+              <p>No se encontraron dispositivos</p>
             )}
           </div>
         )}
@@ -525,4 +586,3 @@ function PlayerDetail({ apiUrl }) {
 }
 
 export default PlayerDetail;
-          
